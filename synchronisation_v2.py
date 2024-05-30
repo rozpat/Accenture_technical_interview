@@ -4,7 +4,7 @@ from scipy.signal import find_peaks, argrelmin
 def detect_treadmill_peak(df_treadmill):
     """
     Function detects 5 peaks in the treadmill signal.
-    The peaks are the local minima of the signal.
+    The peaks are the local maxima of the signal.
 
     Parameters
     ----------
@@ -53,7 +53,7 @@ def vicon_local_minima(df_vicon):
     # Define the threshold for time intervals
     threshold = 0.1  # I set it after checking time intervals
 
-    # Initialize lists to store the selected timestamps
+    # Initialise lists to store the selected timestamps
     selected_timestamps = []
 
     # Add the first value from vicon_minima_timestamps
@@ -69,12 +69,12 @@ def vicon_local_minima(df_vicon):
     # Find the indices where the selected_timestamps values would be inserted
     insert_indices = np.searchsorted(vicon_minima_timestamps, selected_timestamps)
 
-     # Use these indices to index the vicon_local_minima_index array
+    # Use these indices to index the vicon_local_minima_index array
     matching_indices = vicon_local_minima_index[insert_indices]
 
     vicon_minima_values_updated = np.array(df_vicon[:16000]['Z'].iloc[matching_indices])
 
-     # Filtered values
+    # Filtered values
     filtered_vicon_minima_values = vicon_minima_values_updated[vicon_minima_values_updated <= -0.005]
 
     # Find the indices where vicon_minima_values_updated is <= 0
@@ -231,3 +231,22 @@ def vicon_acc_peaks_with_max_distance(cleaned_df):
     vic_acc_peaks_timestamps = np.sort(vic_acc_peaks_timestamps)
 
     return acc_slice, adjusted_signal, vic_valid_peak_indices, vic_acc_peaks_timestamps
+
+# ---- CUT DATA AND ALIGN ------------------
+def cut_and_move_data(df, time_difference):
+    '''
+    This function synchronises datasets and deletes first 30s worth of data
+    '''
+    try:
+        datatype_list = ['treadmill', 'acc', 'gyr']
+        for datatype in datatype_list:
+            if datatype in df['datatype'].values:
+                df['timestamp'] -= time_difference
+        # Cut the first 30s
+        df = df[df['timestamp'] >= 30.000]
+
+        return df
+
+    except KeyError:
+        print('Columns are missing.')
+        return None
